@@ -6,8 +6,8 @@ export interface Task {
   name: string;
   description: string;
   status: TaskStatus;
-  total_time_seconds: number;
-  timer_start: Date | null;
+  time_logged: number;
+  timer_started_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }

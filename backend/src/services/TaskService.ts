@@ -25,7 +25,7 @@ export class TaskService {
       throw new Error("Task not found");
     }
 
-    if (task.timer_start) {
+    if (task.timer_started_at) {
       throw new Error("Timer already running");
     }
 
@@ -39,7 +39,7 @@ export class TaskService {
       throw new Error("Task not found");
     }
 
-    if (!task.timer_start) {
+    if (!task.timer_started_at) {
       throw new Error("Timer not running");
     }
 

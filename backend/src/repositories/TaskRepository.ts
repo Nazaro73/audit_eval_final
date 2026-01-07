@@ -50,7 +50,7 @@ export class TaskRepository {
 
   async startTimer(id: number): Promise<Task | null> {
     const result = await pool.query(
-      "UPDATE tasks SET timer_start = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *",
+      "UPDATE tasks SET timer_started_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *",
       [id]
     );
     return result.rows[0] || null;
@@ -59,10 +59,10 @@ export class TaskRepository {
   async stopTimer(id: number): Promise<Task | null> {
     const result = await pool.query(
       `UPDATE tasks 
-       SET total_time_seconds = total_time_seconds + EXTRACT(EPOCH FROM (NOW() - timer_start))::INTEGER,
-           timer_start = NULL,
+       SET time_logged = time_logged + EXTRACT(EPOCH FROM (NOW() - timer_started_at))::INTEGER,
+           timer_started_at = NULL,
            updated_at = NOW()
-       WHERE id = $1 AND timer_start IS NOT NULL
+       WHERE id = $1 AND timer_started_at IS NOT NULL
        RETURNING *`,
       [id]
     );
@@ -79,7 +79,7 @@ export class TaskRepository {
 
   async getTotalTimeLogged(): Promise<number> {
     const result = await pool.query(
-      "SELECT SUM(total_time_seconds) as total FROM tasks"
+      "SELECT SUM(time_logged) as total FROM tasks"
     );
     return parseInt(result.rows[0].total || "0");
   }
