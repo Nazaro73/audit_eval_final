@@ -1,0 +1,398 @@
+{
+  "id": null,
+  "uid": "audit-qualite",
+  "title": "Audit - Qualité & Engagement",
+  "tags": ["audit", "qualite", "engagement"],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "refresh": "1m",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Score d'engagement",
+      "description": "% d'utilisateurs ayant créé au moins une tâche dans les 7 derniers jours",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND((SELECT COUNT(DISTINCT user_id) FROM tasks WHERE created_at > NOW() - INTERVAL '7 days')::NUMERIC / NULLIF((SELECT COUNT(*) FROM users), 0) * 100, 2) as engagement_score",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 30, "color": "yellow" },
+              { "value": 60, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Ratio Qualité/Quantité",
+      "description": "Tâches terminées / Total tâches créées",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND((SELECT COUNT(*) FROM tasks WHERE status = 'done')::NUMERIC / NULLIF((SELECT COUNT(*) FROM tasks), 0), 2) as quality_ratio",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 0.5, "color": "yellow" },
+              { "value": 0.75, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Taux d'abandon",
+      "description": "% de tâches todo depuis plus de 14 jours",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND(COUNT(CASE WHEN status = 'todo' AND created_at < NOW() - INTERVAL '14 days' THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) as abandon_rate FROM tasks",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 10, "color": "yellow" },
+              { "value": 25, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Utilisateurs inactifs",
+      "description": "Nombre d'utilisateurs sans activité depuis 30 jours",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT COUNT(*) as inactive_users FROM users WHERE id NOT IN (SELECT DISTINCT user_id FROM tasks WHERE created_at > NOW() - INTERVAL '30 days')",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 3, "color": "yellow" },
+              { "value": 5, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "type": "timeseries",
+      "title": "Tendance d'engagement hebdomadaire",
+      "description": "Évolution du nombre d'utilisateurs actifs par semaine",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT DATE_TRUNC('week', created_at) as time, COUNT(DISTINCT user_id) as active_users FROM tasks WHERE created_at > NOW() - INTERVAL '90 days' GROUP BY time ORDER BY time",
+          "format": "time_series",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 25
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "type": "timeseries",
+      "title": "Cycle de vie moyen des tâches",
+      "description": "Temps moyen entre création et complétion (en jours)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT DATE_TRUNC('week', updated_at) as time, AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/86400) as avg_days FROM tasks WHERE status = 'done' AND updated_at > NOW() - INTERVAL '90 days' GROUP BY time ORDER BY time",
+          "format": "time_series",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "type": "table",
+      "title": "Santé par utilisateur",
+      "description": "Vue détaillée de l'activité et performance par utilisateur",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT u.name, COUNT(t.id) as total_tasks, COUNT(CASE WHEN t.status = 'done' THEN 1 END) as completed, COUNT(CASE WHEN t.status = 'in_progress' THEN 1 END) as in_progress, COUNT(CASE WHEN t.status = 'todo' THEN 1 END) as todo, ROUND(COUNT(CASE WHEN t.status = 'done' THEN 1 END)::NUMERIC / NULLIF(COUNT(t.id), 0) * 100, 1) as completion_rate, MAX(t.created_at) as last_activity FROM users u LEFT JOIN tasks t ON u.id = t.user_id GROUP BY u.name ORDER BY completion_rate DESC NULLS LAST",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "completion_rate" },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "value": 0, "color": "red" },
+                    { "value": 50, "color": "yellow" },
+                    { "value": 75, "color": "green" }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "type": "barchart",
+      "title": "Distribution du temps par statut",
+      "description": "Temps total passé sur les tâches par statut",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT CASE WHEN status = 'todo' THEN 'À faire' WHEN status = 'in_progress' THEN 'En cours' WHEN status = 'done' THEN 'Terminé' END as status_fr, ROUND(SUM(time_logged)::NUMERIC / 3600, 2) as total_hours FROM tasks WHERE time_logged > 0 GROUP BY status ORDER BY total_hours DESC",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Temps moyen de réponse",
+      "description": "Temps moyen avant qu'une tâche passe de 'todo' à 'in_progress' (heures)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/3600), 2) as avg_response_time FROM tasks WHERE status IN ('in_progress', 'done') AND created_at < updated_at",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 24, "color": "yellow" },
+              { "value": 72, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Coefficient de charge",
+      "description": "Ratio entre tâches actives et utilisateurs actifs",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND((SELECT COUNT(*) FROM tasks WHERE status IN ('todo', 'in_progress'))::NUMERIC / NULLIF((SELECT COUNT(DISTINCT user_id) FROM tasks WHERE created_at > NOW() - INTERVAL '7 days'), 0), 2) as workload_coefficient",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 5, "color": "yellow" },
+              { "value": 10, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Nouveaux utilisateurs (30j)",
+      "description": "Croissance de la base utilisateurs",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT COUNT(*) as new_users FROM users WHERE created_at > NOW() - INTERVAL '30 days'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    }
+  ]
+}

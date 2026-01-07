@@ -1,0 +1,261 @@
+{
+  "id": null,
+  "uid": "taskwatch-users",
+  "title": "TaskWatch - Utilisateurs",
+    "tags": ["taskwatch", "users"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "type": "stat",
+        "title": "Nombre total d'utilisateurs",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT COUNT(*) as count FROM users",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "blue" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "type": "stat",
+        "title": "Utilisateurs actifs (7j)",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT COUNT(DISTINCT user_id) as count FROM tasks WHERE created_at > NOW() - INTERVAL '7 days'",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "type": "stat",
+        "title": "Nouvelles inscriptions (30j)",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '30 days'",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "purple" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "type": "stat",
+        "title": "Tâches moyenne par utilisateur",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT ROUND(AVG(task_count)) as avg FROM (SELECT user_id, COUNT(*) as task_count FROM tasks GROUP BY user_id) as user_tasks",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "orange" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "type": "timeseries",
+        "title": "Inscriptions par jour",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '30 days' GROUP BY time ORDER BY time",
+            "format": "time_series",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "bottom" }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "type": "bargauge",
+        "title": "Top 10 utilisateurs (par nombre de tâches)",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT u.name, COUNT(t.id) as task_count FROM users u LEFT JOIN tasks t ON u.id = t.user_id GROUP BY u.name ORDER BY task_count DESC LIMIT 10",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 20, "color": "yellow" },
+                { "value": 50, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+        "type": "table",
+        "title": "Utilisateurs récents",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT name, email, created_at FROM users ORDER BY created_at DESC LIMIT 15",
+            "format": "table",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "type": "timeseries",
+        "title": "Activité utilisateurs (tâches créées par jour)",
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, COUNT(DISTINCT user_id) as active_users FROM tasks WHERE created_at > NOW() - INTERVAL '30 days' GROUP BY time ORDER BY time",
+            "format": "time_series",
+            "datasource": {
+              "type": "postgres",
+              "uid": "PostgreSQL"
+            }
+          }
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "bottom" }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 70
+            }
+          }
+        }
+      }
+    ]
+}

@@ -1,0 +1,23 @@
+# Configuration Prometheus pour TaskWatch
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Configuration des sources de données à scraper
+scrape_configs:
+  # Métriques Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Métriques de la base de données PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: /metrics
+
+  # Métriques du backend Node.js (à configurer plus tard)
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: /metrics

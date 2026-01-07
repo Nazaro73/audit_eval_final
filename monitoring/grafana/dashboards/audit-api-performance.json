@@ -1,0 +1,529 @@
+{
+  "id": null,
+  "uid": "audit-api-performance",
+  "title": "Audit - Performance API & Temps de Réponse",
+  "tags": ["audit", "api", "performance", "response-time"],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Temps de réponse moyen",
+      "description": "Temps de réponse moyen de tous les endpoints (ms)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND(AVG(response_time_ms)) as avg_response_time FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 100, "color": "yellow" },
+              { "value": 300, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "P95 Temps de réponse",
+      "description": "95ème percentile du temps de réponse (ms)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms) as p95 FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 200, "color": "yellow" },
+              { "value": 500, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Taux d'erreur",
+      "description": "Pourcentage de requêtes en erreur (4xx, 5xx)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND(COUNT(CASE WHEN status_code >= 400 THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) as error_rate FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 5, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "type": "stat",
+      "title": "Requêtes par heure",
+      "description": "Nombre total de requêtes dans la dernière heure",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT COUNT(*) as requests_per_hour FROM api_metrics WHERE timestamp > NOW() - INTERVAL '1 hour'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "type": "timeseries",
+      "title": "Temps de réponse moyen par endpoint (24h)",
+      "description": "Évolution du temps de réponse pour chaque endpoint",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT DATE_TRUNC('hour', timestamp) as time, endpoint, AVG(response_time_ms) as avg_response FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY time, endpoint ORDER BY time",
+          "format": "time_series",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "pointSize": 5
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "type": "timeseries",
+      "title": "Nombre de requêtes par endpoint (24h)",
+      "description": "Volume de requêtes par endpoint",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT DATE_TRUNC('hour', timestamp) as time, endpoint, COUNT(*) as request_count FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY time, endpoint ORDER BY time",
+          "format": "time_series",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "stacking": { "mode": "normal" }
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "type": "table",
+      "title": "Performance par endpoint",
+      "description": "Statistiques détaillées de performance par endpoint",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT endpoint, method, COUNT(*) as total_requests, ROUND(AVG(response_time_ms)) as avg_ms, ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY response_time_ms)) as p50_ms, ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms)) as p95_ms, ROUND(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY response_time_ms)) as p99_ms, MIN(response_time_ms) as min_ms, MAX(response_time_ms) as max_ms, ROUND(COUNT(CASE WHEN status_code >= 400 THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) as error_rate FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY endpoint, method ORDER BY avg_ms DESC",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "avg_ms",
+            "desc": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "avg_ms" },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "value": 0, "color": "green" },
+                    { "value": 100, "color": "yellow" },
+                    { "value": 300, "color": "red" }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "error_rate" },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "value": 0, "color": "green" },
+                    { "value": 1, "color": "yellow" },
+                    { "value": 5, "color": "red" }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "gridPos": { "x": 12, "y": 12, "w": 6, "h": 8 },
+      "type": "piechart",
+      "title": "Distribution des codes de statut",
+      "description": "Répartition des codes de réponse HTTP",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT CASE WHEN status_code BETWEEN 200 AND 299 THEN '2xx Success' WHEN status_code BETWEEN 300 AND 399 THEN '3xx Redirect' WHEN status_code BETWEEN 400 AND 499 THEN '4xx Client Error' WHEN status_code BETWEEN 500 AND 599 THEN '5xx Server Error' ELSE 'Other' END as status_category, COUNT(*) as count FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY status_category ORDER BY count DESC",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right" },
+        "pieType": "donut"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "gridPos": { "x": 18, "y": 12, "w": 6, "h": 8 },
+      "type": "bargauge",
+      "title": "Endpoints les plus lents",
+      "description": "Top endpoints par temps de réponse moyen",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT endpoint, ROUND(AVG(response_time_ms)) as avg_response FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY endpoint ORDER BY avg_response DESC LIMIT 10",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "continuous-RdYlGn", "reverse": true }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "type": "timeseries",
+      "title": "Taux d'erreur par endpoint (24h)",
+      "description": "Évolution du taux d'erreur (4xx + 5xx)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT DATE_TRUNC('hour', timestamp) as time, endpoint, ROUND(COUNT(CASE WHEN status_code >= 400 THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) as error_rate FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY time, endpoint HAVING COUNT(*) > 0 ORDER BY time",
+          "format": "time_series",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 15
+          },
+          "max": 100,
+          "min": 0
+        }
+      }
+    },
+    {
+      "id": 11,
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "type": "table",
+      "title": "Requêtes les plus lentes (Top 20)",
+      "description": "Liste des requêtes individuelles les plus lentes",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT endpoint, method, status_code, response_time_ms, timestamp FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' ORDER BY response_time_ms DESC LIMIT 20",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "response_time_ms" },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "value": 0, "color": "green" },
+                    { "value": 200, "color": "yellow" },
+                    { "value": 500, "color": "red" }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "gridPos": { "x": 0, "y": 28, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Endpoint le plus rapide",
+      "description": "Endpoint avec le meilleur temps de réponse moyen",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT endpoint, ROUND(AVG(response_time_ms)) as avg_ms FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY endpoint ORDER BY avg_ms ASC LIMIT 1",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "gridPos": { "x": 8, "y": 28, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Endpoint le plus sollicité",
+      "description": "Endpoint avec le plus grand nombre de requêtes",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT endpoint, COUNT(*) as request_count FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY endpoint ORDER BY request_count DESC LIMIT 1",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "gridPos": { "x": 16, "y": 28, "w": 8, "h": 6 },
+      "type": "stat",
+      "title": "Disponibilité (Uptime)",
+      "description": "% de requêtes réussies (2xx, 3xx)",
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT ROUND(COUNT(CASE WHEN status_code < 400 THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) as uptime FROM api_metrics WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "datasource": {
+            "type": "postgres",
+            "uid": "PostgreSQL"
+          }
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 95, "color": "yellow" },
+              { "value": 99, "color": "green" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

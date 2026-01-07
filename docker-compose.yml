@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: taskwatch_user
       POSTGRES_PASSWORD: taskwatch_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -53,5 +53,22 @@ services:
     environment:
       VITE_API_URL: http://localhost:3000
 
+  # Grafana pour la visualisation
+  grafana:
+    image: grafana/grafana:latest
+    container_name: todo-grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  grafana-storage:
